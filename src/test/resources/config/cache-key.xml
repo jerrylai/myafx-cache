@@ -2,10 +2,10 @@
 <xml>
     <!-- db: redis db, expire： 过期时间 天：时：分：秒 -->
     <DataDb>
-        <MobileExemptCode key="mobile_exempt_code" expire="7:0:0:0" />
+        <MobileExemptCode key="code" expire="7:0:0:0" />
     </DataDb>
     <ParamDb>
-        <UserMenu key="user_menu" expire="7:0:0:0" />
+        <UserMenu key="user" expire="7:0:0:0" />
     </ParamDb>
     <SessionDb>
         
@@ -20,12 +20,12 @@
         
     </SortSetDb>
     <HashDb>
-        <VehGpsNow key="veh_gps_now" />
+        <VehGpsNow key="gps_now" />
     </HashDb>
     <LinkListDb>
         
     </LinkListDb>
     <GeoDb>
-        <VehGps key="veh_gps" />
+        <VehGps key="gps" />
     </GeoDb>
 </xml>
