@@ -5,7 +5,7 @@
   
   <groupId>cn.myafx</groupId>
   <artifactId>myafx-cache</artifactId>
-  <version>1.0.0</version>
+  <version>1.1.0</version>
   <packaging>jar</packaging>
 
   <name>myafx-cache</name>
@@ -59,11 +59,11 @@
       <version>2.6.0</version>
 		</dependency>
 
-		<!-- <dependency>
+		<dependency>
 			<groupId>io.lettuce</groupId>
 			<artifactId>lettuce-core</artifactId>
 			<version>6.1.5.RELEASE</version>
-		</dependency> -->
+		</dependency>
   </dependencies>
 
   <build>

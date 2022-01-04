@@ -6,7 +6,7 @@ import cn.myafx.cache.ICacheKey;
 import cn.myafx.cache.base.HashCache;
 
 /**
- * 
+ * 哈希db
  */
 public class HashDbCache<TField, TValue> extends HashCache<TField, TValue> implements IHashDbCache<TField, TValue> {
     

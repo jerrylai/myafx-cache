@@ -1,15 +1,14 @@
 package cn.myafx.cache;
 
-/**
- * Hello world!
- *
- */
-//public class App {
-   // public static void main( String[] args )throws Exception{
-        // try (IDataDbCache cache = new DataDbCache("MobileExemptCode", RedisUtils.getConnection(), RedisUtils.getCacheKey(), RedisUtils.getPrefix())) {
-        //     String s = cache.get(String.class);
+import cn.myafx.cache.db.IGeoDbCache;
+
+public class App {
+    @SuppressWarnings("unchecked")
+   public static void main( String[] args )throws Exception{
+        try (IGeoDbCache cache = RedisUtils.getCache("VehGps", IGeoDbCache.class)) {
+            var s = cache.getCount();
             
-        //     System.out.println(s);
-        // }
-    //}
-//}
+            System.out.println(s);
+        }
+    }
+}

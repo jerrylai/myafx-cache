@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<xml>
+    <!-- db: redis db, expire： 过期时间 天：时：分：秒 -->
+    <DataDb>
+        <MobileExemptCode key="mobile_exempt_code" expire="7:0:0:0" />
+    </DataDb>
+    <ParamDb>
+        <UserMenu key="user_menu" expire="7:0:0:0" />
+    </ParamDb>
+    <SessionDb>
+        
+    </SessionDb>
+    <DistributedLockDb expire="5:0">
+        <DistributedLock key="distributed_lock" />
+    </DistributedLockDb>
+    <SetDb>
+       
+    </SetDb>
+    <SortSetDb>
+        
+    </SortSetDb>
+    <HashDb>
+        <VehGpsNow key="veh_gps_now" />
+    </HashDb>
+    <LinkListDb>
+        
+    </LinkListDb>
+    <GeoDb>
+        <VehGps key="veh_gps" />
+    </GeoDb>
+</xml>
