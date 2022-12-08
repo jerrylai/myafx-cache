@@ -29,13 +29,14 @@ public final class CacheKeyConfig {
 
     /**
      * CacheKeyModel
-     * @param node db 节点名称
-     * @param item 配置名称
-     * @param key 配置key
+     * 
+     * @param node   db 节点名称
+     * @param item   配置名称
+     * @param key    配置key
      * @param expire 过期时间, 秒
-     * @param db 分配db
+     * @param db     分配db
      */
-    public CacheKeyConfig(String node, String item, String key, Integer expire, List<Integer> db){
+    public CacheKeyConfig(String node, String item, String key, Integer expire, List<Integer> db) {
         this.Node = node;
         this.Key = key;
         this.Item = item;

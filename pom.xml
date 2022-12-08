@@ -5,7 +5,7 @@
   
   <groupId>cn.myafx</groupId>
   <artifactId>myafx-cache</artifactId>
-  <version>1.1.0</version>
+  <version>2.1.0</version>
   <packaging>jar</packaging>
 
   <name>myafx-cache</name>
@@ -28,14 +28,6 @@
       <timezone>+8</timezone>
     </developer>
   </developers>
-  <properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<java.version>11</java.version>
-    <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
-    <maven.compiler.source>17</maven.compiler.source>
-    <maven.compiler.target>17</maven.compiler.target>
-	</properties>
   <distributionManagement>
     <repository>
       <id>ossrh</id>
@@ -46,24 +38,19 @@
       <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
     </snapshotRepository>
   </distributionManagement>
+  
   <dependencies>
     <dependency>
-			<groupId>org.springframework.data</groupId>
-			<artifactId>spring-data-redis</artifactId>
-			<version>2.6.0</version>
-		</dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-redis</artifactId>
+      <version>3.0.0</version>
+    </dependency>
 
     <dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-json</artifactId>
-      <version>2.6.0</version>
-		</dependency>
-
-		<!-- <dependency>
-			<groupId>io.lettuce</groupId>
-			<artifactId>lettuce-core</artifactId>
-			<version>6.1.5.RELEASE</version>
-		</dependency> -->
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-json</artifactId>
+      <version>3.0.0</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -73,7 +60,7 @@
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-source-plugin</artifactId>
-            <version>3.2.0</version>
+            <version>3.2.1</version>
             <executions>
                 <execution>
                     <phase>package</phase>
@@ -87,7 +74,7 @@
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
-            <version>3.3.1</version>
+            <version>3.4.1</version>
             <executions>
                 <execution>
                     <phase>package</phase>
@@ -99,18 +86,18 @@
         </plugin>
         <!-- GPG -->
         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-gpg-plugin</artifactId>
-            <version>3.0.1</version>
-            <executions>
-                <execution>
-                    <phase>verify</phase>
-                    <goals>
-                        <goal>sign</goal>
-                    </goals>
-                </execution>
-            </executions>
-        </plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <version>3.0.1</version>
+          <executions>
+              <execution>
+                  <phase>verify</phase>
+                  <goals>
+                      <goal>sign</goal>
+                  </goals>
+              </execution>
+          </executions>
+      </plugin>
     </plugins>
   </build>
 </project>

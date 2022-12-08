@@ -5,11 +5,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.data.domain.Range;
+import org.springframework.data.redis.connection.Limit;
 import org.springframework.data.redis.connection.RedisConnection;
-import org.springframework.data.redis.connection.RedisZSetCommands.Limit;
-import org.springframework.data.redis.connection.RedisZSetCommands.Range;
-import org.springframework.data.redis.connection.RedisZSetCommands.Tuple;
 import org.springframework.data.redis.connection.RedisZSetCommands.ZAddArgs;
+import org.springframework.data.redis.connection.zset.Tuple;
 import org.springframework.data.redis.core.ScanOptions.ScanOptionsBuilder;
 
 import cn.myafx.cache.ExcludeType;
@@ -31,23 +31,25 @@ public class SortSetCache<T> extends RedisCache implements ISortSetCache<T> {
 
     /**
      * SortSetCache
-     * @param node 缓存key配置db节点
-     * @param item 缓存key配置项
+     * 
+     * @param node            缓存key配置db节点
+     * @param item            缓存key配置项
      * @param redisConnection RedisConnection
-     * @param cacheKey ICacheKey
-     * @param prefix 缓存前缀
-     * @param clazz T.class
+     * @param cacheKey        ICacheKey
+     * @param prefix          缓存前缀
+     * @param clazz           T.class
      * @throws Exception
      */
-    public SortSetCache(String node, String item, RedisConnection redisConnection, ICacheKey cacheKey, String prefix, Class<T> clazz) throws Exception {
+    public SortSetCache(String node, String item, RedisConnection redisConnection, ICacheKey cacheKey, String prefix,
+            Class<T> clazz) throws Exception {
         super(node, item, redisConnection, cacheKey, prefix);
-        if(clazz == null) throw new Exception("clazz is null!");
+        if (clazz == null)
+            throw new Exception("clazz is null!");
         this.clazz = clazz;
     }
 
-
-    private ZAddArgs toZAddArgs(OpWhen when){
-        switch(when){
+    private ZAddArgs toZAddArgs(OpWhen when) {
+        switch (when) {
             case Exists:
                 return ZAddArgs.ifExists();
             case NotExists:
@@ -60,48 +62,54 @@ public class SortSetCache<T> extends RedisCache implements ISortSetCache<T> {
 
     /**
      * 添加或更新数据
+     * 
      * @param value value
      * @param score 排序分
-     * @param when 操作类型
-     * @param args 缓存key参数
+     * @param when  操作类型
+     * @param args  缓存key参数
      * @return
      * @throws Exception
      */
     @Override
-    public boolean addOrUpdate(T value, double score, OpWhen when, Object... args) throws Exception{
-        if (value == null) throw new Exception("value is null!");
+    public boolean addOrUpdate(T value, double score, OpWhen when, Object... args) throws Exception {
+        if (value == null)
+            throw new Exception("value is null!");
         String cachekey = this.getCacheKey(args);
         int db = this.getCacheDb(cachekey);
         this.redis.select(db);
         var cacheKeyBytes = getBytes(cachekey);
-        var r = this.redis.zAdd(cacheKeyBytes, score, serialize(value), toZAddArgs(when));
+        var r = this.redis.zSetCommands().zAdd(cacheKeyBytes, score, serialize(value), toZAddArgs(when));
 
         return r == null ? false : true;
     }
 
     /**
      * 添加或更新数据
-     * @param m SortSetModel
+     * 
+     * @param m    SortSetModel
      * @param when 操作类型
      * @param args 缓存key参数
      * @return
      * @throws Exception
      */
     @Override
-    public boolean addOrUpdate(SortSetModel<T> m, OpWhen when, Object... args) throws Exception{
-        if (m == null) throw new Exception("m is null!");
-        if (m.Value == null) throw new Exception("value is null!");
+    public boolean addOrUpdate(SortSetModel<T> m, OpWhen when, Object... args) throws Exception {
+        if (m == null)
+            throw new Exception("m is null!");
+        if (m.Value == null)
+            throw new Exception("value is null!");
         String cachekey = this.getCacheKey(args);
         int db = this.getCacheDb(cachekey);
         this.redis.select(db);
         var cacheKeyBytes = getBytes(cachekey);
-        var r = this.redis.zAdd(cacheKeyBytes, m.Score, serialize(m.Value), toZAddArgs(when));
+        var r = this.redis.zSetCommands().zAdd(cacheKeyBytes, m.Score, serialize(m.Value), toZAddArgs(when));
 
         return r == null ? false : true;
     }
 
     /**
      * 添加或更新数据
+     * 
      * @param list SortSetModel List
      * @param when 操作类型
      * @param args 缓存key参数
@@ -109,102 +117,116 @@ public class SortSetCache<T> extends RedisCache implements ISortSetCache<T> {
      * @throws Exception
      */
     @Override
-    public long addOrUpdate(List<SortSetModel<T>> list, OpWhen when, Object... args) throws Exception{
-        if (list == null) throw new Exception("list is null!");
-        if (list.size() == 0) return 0;
+    public long addOrUpdate(List<SortSetModel<T>> list, OpWhen when, Object... args) throws Exception {
+        if (list == null)
+            throw new Exception("list is null!");
+        if (list.size() == 0)
+            return 0;
         String cachekey = this.getCacheKey(args);
         int db = this.getCacheDb(cachekey);
         this.redis.select(db);
         var cacheKeyBytes = getBytes(cachekey);
         Set<Tuple> hashset = new HashSet<>(list.size());
-        for(var sm : list){
-            if(sm == null)throw new Exception("list item is null!");
-            if(sm.Value == null)throw new Exception("list item.value is null!");
+        for (var sm : list) {
+            if (sm == null)
+                throw new Exception("list item is null!");
+            if (sm.Value == null)
+                throw new Exception("list item.value is null!");
             hashset.add(new SortSetTuple(serialize(sm.Value), sm.Score));
         }
-        var r = this.redis.zAdd(cacheKeyBytes, hashset, toZAddArgs(when));
+        var r = this.redis.zSetCommands().zAdd(cacheKeyBytes, hashset, toZAddArgs(when));
 
         return r == null ? 0 : r;
     }
 
     /**
      * 减少 score
+     * 
      * @param value value
      * @param score 排序分
-     * @param args 缓存key参数
+     * @param args  缓存key参数
      * @return
      * @throws Exception
      */
     @Override
-    public double decdrement(T value, double score, Object... args) throws Exception{
-        if (value == null) throw new Exception("value is null!");
+    public double decdrement(T value, double score, Object... args) throws Exception {
+        if (value == null)
+            throw new Exception("value is null!");
         String cachekey = this.getCacheKey(args);
         int db = this.getCacheDb(cachekey);
         this.redis.select(db);
         var cacheKeyBytes = getBytes(cachekey);
-        var r = this.redis.zIncrBy(cacheKeyBytes, -score, serialize(value));
+        var r = this.redis.zSetCommands().zIncrBy(cacheKeyBytes, -score, serialize(value));
 
         return r == null ? 0 : r;
     }
 
     /**
      * 增加 score
-     * @param value  value
+     * 
+     * @param value value
      * @param score 排序分
-     * @param args 缓存key参数
+     * @param args  缓存key参数
      * @return
      * @throws Exception
      */
     @Override
-    public double increment(T value, double score, Object... args) throws Exception{
-        if (value == null) throw new Exception("value is null!");
+    public double increment(T value, double score, Object... args) throws Exception {
+        if (value == null)
+            throw new Exception("value is null!");
         String cachekey = this.getCacheKey(args);
         int db = this.getCacheDb(cachekey);
         this.redis.select(db);
         var cacheKeyBytes = getBytes(cachekey);
-        var r = this.redis.zIncrBy(cacheKeyBytes, score, serialize(value));
+        var r = this.redis.zSetCommands().zIncrBy(cacheKeyBytes, score, serialize(value));
 
         return r == null ? 0 : r;
     }
+
     /**
      * 获取集合数量
+     * 
      * @param minScore 最小排序分
      * @param maxScore 最大排序分
-     * @param excType 条件类型
-     * @param args 缓存key参数
+     * @param excType  条件类型
+     * @param args     缓存key参数
      * @return
      * @throws Exception
      */
     @Override
-    public long getCount(double minScore, double maxScore, ExcludeType excType, Object... args) throws Exception{
+    public long getCount(double minScore, double maxScore, ExcludeType excType, Object... args) throws Exception {
         String cachekey = this.getCacheKey(args);
         int db = this.getCacheDb(cachekey);
         this.redis.select(db);
         var cacheKeyBytes = getBytes(cachekey);
-        var r = this.redis.zCount(cacheKeyBytes, minScore, maxScore);
+        var r = this.redis.zSetCommands().zCount(cacheKeyBytes, minScore, maxScore);
 
         return r == null ? 0 : r;
     }
 
     /**
      * 返回集合
+     * 
      * @param sort 排序
      * @param args 缓存key参数
      * @return
      * @throws Exception
      */
     @Override
-    public SortSetModel<T> pop(Sort sort, Object... args) throws Exception{
-        if (clazz == null) throw new Exception("clazz is null!");
+    public SortSetModel<T> pop(Sort sort, Object... args) throws Exception {
+        if (clazz == null)
+            throw new Exception("clazz is null!");
         String cachekey = this.getCacheKey(args);
         int db = this.getCacheDb(cachekey);
         this.redis.select(db);
         var cacheKeyBytes = getBytes(cachekey);
         Tuple r = null;
-        if(sort == Sort.Asc) r = this.redis.zPopMax(cacheKeyBytes);
-        else r = this.redis.zPopMin(cacheKeyBytes);
+        if (sort == Sort.Asc)
+            r = this.redis.zSetCommands().zPopMax(cacheKeyBytes);
+        else
+            r = this.redis.zSetCommands().zPopMin(cacheKeyBytes);
         SortSetModel<T> m = null;
-        if(r != null){
+        if (r != null) {
             m = new SortSetModel<T>(deserialize(r.getValue(), clazz), r.getScore());
         }
 
@@ -213,25 +235,30 @@ public class SortSetCache<T> extends RedisCache implements ISortSetCache<T> {
 
     /**
      * 返回并集合
+     * 
      * @param count 返回数量
-     * @param sort 排序
-     * @param args 缓存key参数
+     * @param sort  排序
+     * @param args  缓存key参数
      * @return
      * @throws Exception
      */
     @Override
-    public List<SortSetModel<T>> pop(long count, Sort sort, Object... args) throws Exception{
-        if (clazz == null) throw new Exception("clazz is null!");
-        if (count <= 0) throw new Exception("count="+count+" is error!");
+    public List<SortSetModel<T>> pop(long count, Sort sort, Object... args) throws Exception {
+        if (clazz == null)
+            throw new Exception("clazz is null!");
+        if (count <= 0)
+            throw new Exception("count=" + count + " is error!");
         String cachekey = this.getCacheKey(args);
         int db = this.getCacheDb(cachekey);
         this.redis.select(db);
         var cacheKeyBytes = getBytes(cachekey);
         Set<Tuple> r = null;
-        if(sort == Sort.Asc) r = this.redis.zPopMax(cacheKeyBytes, count);
-        else r = this.redis.zPopMin(cacheKeyBytes, count);
+        if (sort == Sort.Asc)
+            r = this.redis.zSetCommands().zPopMax(cacheKeyBytes, count);
+        else
+            r = this.redis.zSetCommands().zPopMin(cacheKeyBytes, count);
         List<SortSetModel<T>> list = null;
-        if(r != null){
+        if (r != null) {
             list = new ArrayList<>(r.size());
             for (var rt : r) {
                 list.add(new SortSetModel<T>(deserialize(rt.getValue(), clazz), rt.getScore()));
@@ -243,25 +270,29 @@ public class SortSetCache<T> extends RedisCache implements ISortSetCache<T> {
 
     /**
      * 获取集合
+     * 
      * @param start 开始位置
-     * @param stop 结束位置
-     * @param sort 排序
-     * @param args 缓存key参数
+     * @param stop  结束位置
+     * @param sort  排序
+     * @param args  缓存key参数
      * @return
      * @throws Exception
      */
     @Override
-    public List<T> get(long start, long stop, Sort sort, Object... args) throws Exception{
-        if (clazz == null) throw new Exception("clazz is null!");
+    public List<T> get(long start, long stop, Sort sort, Object... args) throws Exception {
+        if (clazz == null)
+            throw new Exception("clazz is null!");
         String cachekey = this.getCacheKey(args);
         int db = this.getCacheDb(cachekey);
         this.redis.select(db);
         var cacheKeyBytes = getBytes(cachekey);
         Set<byte[]> r = null;
-        if(sort == Sort.Asc) r = this.redis.zRange(cacheKeyBytes, start, stop);
-        else r = this.redis.zRevRange(cacheKeyBytes, start, stop);
+        if (sort == Sort.Asc)
+            r = this.redis.zSetCommands().zRange(cacheKeyBytes, start, stop);
+        else
+            r = this.redis.zSetCommands().zRevRange(cacheKeyBytes, start, stop);
         List<T> list = null;
-        if(r != null){
+        if (r != null) {
             list = new ArrayList<>(r.size());
             for (var rt : r) {
                 list.add(deserialize(rt, clazz));
@@ -273,25 +304,29 @@ public class SortSetCache<T> extends RedisCache implements ISortSetCache<T> {
 
     /**
      * 获取集合
+     * 
      * @param start 开始位置
-     * @param stop 结束位置
-     * @param sort 排序
-     * @param args 缓存key参数
+     * @param stop  结束位置
+     * @param sort  排序
+     * @param args  缓存key参数
      * @return
      * @throws Exception
      */
     @Override
-    public List<SortSetModel<T>> getWithScores(long start, long stop, Sort sort, Object... args) throws Exception{
-        if (clazz == null) throw new Exception("clazz is null!");
+    public List<SortSetModel<T>> getWithScores(long start, long stop, Sort sort, Object... args) throws Exception {
+        if (clazz == null)
+            throw new Exception("clazz is null!");
         String cachekey = this.getCacheKey(args);
         int db = this.getCacheDb(cachekey);
         this.redis.select(db);
         var cacheKeyBytes = getBytes(cachekey);
         Set<Tuple> r = null;
-        if(sort == Sort.Asc) r = this.redis.zRangeWithScores(cacheKeyBytes, start, stop);
-        else r = this.redis.zRevRangeWithScores(cacheKeyBytes, start, stop);
+        if (sort == Sort.Asc)
+            r = this.redis.zSetCommands().zRangeWithScores(cacheKeyBytes, start, stop);
+        else
+            r = this.redis.zSetCommands().zRevRangeWithScores(cacheKeyBytes, start, stop);
         List<SortSetModel<T>> list = null;
-        if(r != null){
+        if (r != null) {
             list = new ArrayList<>(r.size());
             for (var rt : r) {
                 list.add(new SortSetModel<T>(deserialize(rt.getValue(), clazz), rt.getScore()));
@@ -301,25 +336,21 @@ public class SortSetCache<T> extends RedisCache implements ISortSetCache<T> {
         return list;
     }
 
-    private Range toRange(double startScore, double stopScore, ExcludeType excType){
-        Range range = Range.range();
-        switch(excType){
+    private Range<Double> toRange(double startScore, double stopScore, ExcludeType excType) {
+        Range<Double> range = null;
+        switch (excType) {
             case Start:
-                range.gt(startScore);
-                range.lte(stopScore);
+                range = Range.leftOpen(startScore, stopScore);
                 break;
             case Stop:
-                range.gte(startScore);
-                range.lt(stopScore);
+                range = Range.rightOpen(startScore, stopScore);
                 break;
             case Both:
-                range.gt(startScore);
-                range.lt(stopScore);
+                range = Range.open(startScore, stopScore);
                 break;
             case None:
             default:
-                range.gte(startScore);
-                range.lte(stopScore);
+                range = Range.closed(startScore, stopScore);
                 break;
         }
 
@@ -328,20 +359,24 @@ public class SortSetCache<T> extends RedisCache implements ISortSetCache<T> {
 
     /**
      * 获取集合
+     * 
      * @param startScore 开始位置排序分
-     * @param stopScore 结束位置排序分
-     * @param excType 条件类型
-     * @param sort 排序
-     * @param skip 跳过多少个
-     * @param take 返回多少个, -1.返回所有
-     * @param args 缓存key参数
+     * @param stopScore  结束位置排序分
+     * @param excType    条件类型
+     * @param sort       排序
+     * @param skip       跳过多少个
+     * @param take       返回多少个, -1.返回所有
+     * @param args       缓存key参数
      * @return
      * @throws Exception
      */
     @Override
-    public List<T> getByScore(double startScore, double stopScore, ExcludeType excType, Sort sort, int skip, int take, Object... args) throws Exception{
-        if (clazz == null) throw new Exception("clazz is null!");
-        if (skip < 0) throw new Exception("skip="+skip+" is error!");
+    public List<T> getByScore(double startScore, double stopScore, ExcludeType excType, Sort sort, int skip, int take,
+            Object... args) throws Exception {
+        if (clazz == null)
+            throw new Exception("clazz is null!");
+        if (skip < 0)
+            throw new Exception("skip=" + skip + " is error!");
         String cachekey = this.getCacheKey(args);
         int db = this.getCacheDb(cachekey);
         this.redis.select(db);
@@ -349,10 +384,12 @@ public class SortSetCache<T> extends RedisCache implements ISortSetCache<T> {
         var range = toRange(startScore, stopScore, excType);
         var limit = Limit.limit().offset(skip).count(take);
         Set<byte[]> r = null;
-        if(sort == Sort.Asc) r = this.redis.zRangeByLex(cacheKeyBytes, range, limit);
-        else r = this.redis.zRevRangeByLex(cacheKeyBytes, range, limit);
+        if (sort == Sort.Asc)
+            r = this.redis.zSetCommands().zRangeByScore(cacheKeyBytes, range, limit);
+        else
+            r = this.redis.zSetCommands().zRevRangeByScore(cacheKeyBytes, range, limit);
         List<T> list = null;
-        if(r != null){
+        if (r != null) {
             list = new ArrayList<>(r.size());
             for (var rt : r) {
                 list.add(deserialize(rt, clazz));
@@ -364,20 +401,24 @@ public class SortSetCache<T> extends RedisCache implements ISortSetCache<T> {
 
     /**
      * 获取集合
+     * 
      * @param startScore 开始位置排序分
-     * @param stopScore 结束位置排序分
-     * @param excType 条件类型
-     * @param sort 排序
-     * @param skip 跳过多少个
-     * @param take 返回多少个
-     * @param args 缓存key参数
+     * @param stopScore  结束位置排序分
+     * @param excType    条件类型
+     * @param sort       排序
+     * @param skip       跳过多少个
+     * @param take       返回多少个
+     * @param args       缓存key参数
      * @return
      * @throws Exception
      */
     @Override
-    public List<SortSetModel<T>> getByScoreWithScores(double startScore, double stopScore, ExcludeType excType, Sort sort, int skip, int take, Object... args) throws Exception{
-        if (clazz == null) throw new Exception("clazz is null!");
-        if (skip < 0) throw new Exception("skip="+skip+" is error!");
+    public List<SortSetModel<T>> getByScoreWithScores(double startScore, double stopScore, ExcludeType excType,
+            Sort sort, int skip, int take, Object... args) throws Exception {
+        if (clazz == null)
+            throw new Exception("clazz is null!");
+        if (skip < 0)
+            throw new Exception("skip=" + skip + " is error!");
         String cachekey = this.getCacheKey(args);
         int db = this.getCacheDb(cachekey);
         this.redis.select(db);
@@ -385,10 +426,12 @@ public class SortSetCache<T> extends RedisCache implements ISortSetCache<T> {
         var range = toRange(startScore, stopScore, excType);
         var limit = Limit.limit().offset(skip).count(take);
         Set<Tuple> r = null;
-        if(sort == Sort.Asc) r = this.redis.zRangeByScoreWithScores(cacheKeyBytes, range, limit);
-        else r = this.redis.zRevRangeByScoreWithScores(cacheKeyBytes, range, limit);
+        if (sort == Sort.Asc)
+            r = this.redis.zSetCommands().zRangeByScoreWithScores(cacheKeyBytes, range, limit);
+        else
+            r = this.redis.zSetCommands().zRevRangeByScoreWithScores(cacheKeyBytes, range, limit);
         List<SortSetModel<T>> list = null;
-        if(r != null){
+        if (r != null) {
             list = new ArrayList<>(r.size());
             for (var rt : r) {
                 list.add(new SortSetModel<T>(deserialize(rt.getValue(), clazz), rt.getScore()));
@@ -400,122 +443,134 @@ public class SortSetCache<T> extends RedisCache implements ISortSetCache<T> {
 
     /**
      * 移除集合
+     * 
      * @param value value
-     * @param args 缓存key参数
+     * @param args  缓存key参数
      * @return
      * @throws Exception
      */
     @Override
-    public boolean delete(T value, Object... args) throws Exception{
-        if (value == null) throw new Exception("value is null!");
+    public boolean delete(T value, Object... args) throws Exception {
+        if (value == null)
+            throw new Exception("value is null!");
         String cachekey = this.getCacheKey(args);
         int db = this.getCacheDb(cachekey);
         this.redis.select(db);
         var cacheKeyBytes = getBytes(cachekey);
-        var r = this.redis.zRem(cacheKeyBytes, serialize(value));
+        var r = this.redis.zSetCommands().zRem(cacheKeyBytes, serialize(value));
 
-        return r > 0;
+        return r != null && r > 0;
     }
 
     /**
      * 移除集合
+     * 
      * @param list value List
      * @param args 缓存key参数
      * @return
      * @throws Exception
      */
     @Override
-    public long delete(List<T> list, Object... args) throws Exception{
-        if (list == null) throw new Exception("list is null!");
-        if(list.size() == 0) return 0;
+    public long delete(List<T> list, Object... args) throws Exception {
+        if (list == null)
+            throw new Exception("list is null!");
+        if (list.size() == 0)
+            return 0;
         String cachekey = this.getCacheKey(args);
         int db = this.getCacheDb(cachekey);
         this.redis.select(db);
         var cacheKeyBytes = getBytes(cachekey);
         byte[][] arr = new byte[list.size()][];
-        for(var i=0; i<list.size(); i++){
+        for (var i = 0; i < list.size(); i++) {
             var m = list.get(i);
-            if(m == null)throw new Exception("list item is null!");
+            if (m == null)
+                throw new Exception("list item is null!");
             arr[i] = serialize(m);
         }
-        var r = this.redis.zRem(cacheKeyBytes, arr);
+        var r = this.redis.zSetCommands().zRem(cacheKeyBytes, arr);
 
-        return r  == null ? 0 : r;
+        return r == null ? 0 : r;
     }
 
     /**
      * 移除集合
+     * 
      * @param start 开始位置
-     * @param stop 结束位置
-     * @param args 缓存key参数
+     * @param stop  结束位置
+     * @param args  缓存key参数
      * @return
      * @throws Exception
      */
     @Override
-    public long delete(long start, long stop, Object... args) throws Exception{
+    public long delete(long start, long stop, Object... args) throws Exception {
         String cachekey = this.getCacheKey(args);
         int db = this.getCacheDb(cachekey);
         this.redis.select(db);
         var cacheKeyBytes = getBytes(cachekey);
-        var r = this.redis.zRemRange(cacheKeyBytes, start, stop);
+        var r = this.redis.zSetCommands().zRemRange(cacheKeyBytes, start, stop);
 
-        return r  == null ? 0 : r;
+        return r == null ? 0 : r;
     }
 
     /**
      * 移除集合
+     * 
      * @param startScore 开始位置排序分
-     * @param stopScore 结束位置排序分
-     * @param excType 条件类型
-     * @param args 缓存key参数
+     * @param stopScore  结束位置排序分
+     * @param excType    条件类型
+     * @param args       缓存key参数
      * @return
      * @throws Exception
      */
     @Override
-    public long deleteByScore(double startScore, double stopScore, ExcludeType excType, Object... args) throws Exception{
+    public long deleteByScore(double startScore, double stopScore, ExcludeType excType, Object... args)
+            throws Exception {
         String cachekey = this.getCacheKey(args);
         int db = this.getCacheDb(cachekey);
         this.redis.select(db);
         var cacheKeyBytes = getBytes(cachekey);
-        var r = this.redis.zRemRangeByScore(cacheKeyBytes, toRange(startScore, stopScore, excType));
+        var r = this.redis.zSetCommands().zRemRangeByScore(cacheKeyBytes, toRange(startScore, stopScore, excType));
 
-        return r  == null ? 0 : r;
+        return r == null ? 0 : r;
     }
 
     /**
      * 游标方式读取数据
-     * @param pattern 搜索表达式
+     * 
+     * @param pattern  搜索表达式
      * @param pageSize 游标页大小
-     * @param args 缓存key参数
+     * @param args     缓存key参数
      * @return
      * @throws Exception
      */
     @Override
-    public ICacheCursor<SortSetModel<T>> scan(String pattern, int pageSize, Object... args) throws Exception{
-        if(pattern == null || pattern.isEmpty()) throw new Exception("pattern is null!");
-        if(pageSize <= 0)throw new Exception("pageSize="+pageSize+" is error!");
+    public ICacheCursor<SortSetModel<T>> scan(String pattern, int pageSize, Object... args) throws Exception {
+        if (pattern == null || pattern.isEmpty())
+            throw new Exception("pattern is null!");
+        if (pageSize <= 0)
+            throw new Exception("pageSize=" + pageSize + " is error!");
         String cachekey = this.getCacheKey(args);
         int db = this.getCacheDb(cachekey);
         this.redis.select(db);
         var cacheKeyBytes = getBytes(cachekey);
         ScanOptionsBuilder opbu = ScanOptions.scanOptions().match(pattern).count(pageSize);
-        var r = this.redis.zScan(cacheKeyBytes, opbu.build());
+        var r = this.redis.zSetCommands().zScan(cacheKeyBytes, opbu.build());
 
         return new SortSetCursor(r, clazz);
     }
 
-    public class SortSetTuple implements Tuple{
+    public class SortSetTuple implements Tuple {
         private byte[] value;
         private Double score;
 
-        public SortSetTuple(byte[] value, Double score){
+        public SortSetTuple(byte[] value, Double score) {
             this.value = value;
             this.score = score;
         }
 
         @Override
         public int compareTo(Double arg0) {
-            return (int)(this.score - arg0);
+            return (int) (this.score - arg0);
         }
 
         @Override
@@ -526,22 +581,22 @@ public class SortSetCache<T> extends RedisCache implements ISortSetCache<T> {
         @Override
         public Double getScore() {
             return this.score;
-        } 
+        }
     }
 
-    public class SortSetCursor  implements ICacheCursor<SortSetModel<T>>{
+    public class SortSetCursor implements ICacheCursor<SortSetModel<T>> {
 
         private Cursor<Tuple> cursor;
         private Class<T> valueClazz;
 
-        public SortSetCursor(Cursor<Tuple> cursor, Class<T> valueClazz){
+        public SortSetCursor(Cursor<Tuple> cursor, Class<T> valueClazz) {
             this.cursor = cursor;
             this.valueClazz = valueClazz;
         }
 
         @Override
         public void close() {
-            if(this.cursor != null){
+            if (this.cursor != null) {
                 this.cursor.close();
                 this.cursor = null;
                 this.valueClazz = null;
@@ -556,11 +611,11 @@ public class SortSetCache<T> extends RedisCache implements ISortSetCache<T> {
         @Override
         public SortSetModel<T> next() {
             var tp = this.cursor.next();
-            try{
+            try {
                 T v = deserialize(tp.getValue(), valueClazz);
                 return new SortSetModel<T>(v, tp.getScore());
+            } catch (Exception ex) {
             }
-            catch(Exception ex){}
 
             return null;
         }
