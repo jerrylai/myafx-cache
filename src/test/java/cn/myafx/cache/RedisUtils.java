@@ -1,5 +1,6 @@
 package cn.myafx.cache;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,12 +39,12 @@ public final class RedisUtils {
                 var password = "";
                 if (password != null && !password.isEmpty())
                     redisConfig.setPassword(password);
-
                 var clientConfig = LettuceClientConfiguration.builder();
                 var clientName = "test";
                 if (clientName != null && !clientName.isEmpty())
                     clientConfig.clientName(clientName);
-
+                int timeout = 5;
+                clientConfig.commandTimeout(Duration.ofSeconds(timeout));
                 var factory = new LettuceConnectionFactory(redisConfig,
                         clientConfig.build());
                 factory.afterPropertiesSet();
