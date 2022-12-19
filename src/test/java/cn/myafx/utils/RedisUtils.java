@@ -1,5 +1,6 @@
-package cn.myafx.cache;
+package cn.myafx.utils;
 
+import java.io.File;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -8,6 +9,9 @@ import org.springframework.data.redis.connection.*;
 import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 
+import cn.myafx.cache.CacheFactory;
+import cn.myafx.cache.ICacheKey;
+import cn.myafx.cache.IJsonMapper;
 import cn.myafx.cache.base.IHashCache;
 import cn.myafx.cache.base.IRedisCache;
 import cn.myafx.cache.base.IValueCache;
@@ -66,9 +70,8 @@ public final class RedisUtils {
             return cacheKey;
         synchronized (lockCacheKey) {
             if (cacheKey == null) {
-                try (var fs = RedisUtils.class.getClassLoader().getResourceAsStream("cache-key.xml")) {
-                    cacheKey = new cn.myafx.cache.CacheKey(fs);
-                }
+                var url = RedisUtils.class.getClassLoader().getResource("cache-key.xml");
+                cacheKey = new cn.myafx.cache.CacheKey(url);
             }
         }
 

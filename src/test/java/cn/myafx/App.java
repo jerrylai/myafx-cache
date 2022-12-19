@@ -1,13 +1,10 @@
-package cn.myafx.cache;
+package cn.myafx;
 
 import cn.myafx.cache.db.IGeoDbCache;
 import cn.myafx.cache.db.IParamDbCache;
+import cn.myafx.utils.RedisUtils;
 
 public class App {
-    /**
-     * @param args
-     * @throws Exception
-     */
     @SuppressWarnings("unchecked")
     public static void main(String[] args) throws Exception {
         try (IGeoDbCache cache = RedisUtils.getCache("VehGps", IGeoDbCache.class)) {

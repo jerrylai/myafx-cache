@@ -1,6 +1,7 @@
 package cn.myafx.cache.base;
 
-import cn.myafx.cache.*;
+import cn.myafx.cache.CacheKeyConfig;
+import cn.myafx.cache.IJsonMapper;
 
 public interface IRedisCache extends IBaseCache {
     /**

@@ -1,12 +1,14 @@
 package cn.myafx.cache;
 
+import java.io.File;
+import java.lang.reflect.Modifier;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 
-import cn.myafx.cache.base.IHashCache;
-import cn.myafx.cache.base.IRedisCache;
-import cn.myafx.cache.base.IValueCache;
-import cn.myafx.cache.base.RedisCache;
+import cn.myafx.cache.base.*;
 
 /**
  * 
@@ -16,6 +18,7 @@ public class CacheFactory implements AutoCloseable {
     private ICacheKey cacheKey;
     private String prefix;
     private IJsonMapper mapper;
+    private Map<Class<?>, Class<?>> classMap;
 
     public CacheFactory(RedisConnectionFactory connectionFactory, ICacheKey cacheKey, String prefix,
             IJsonMapper jsonMapper) throws Exception {
@@ -32,6 +35,39 @@ public class CacheFactory implements AutoCloseable {
             this.prefix = "";
         this.mapper = jsonMapper;
         RedisCache.DefaultJsonMapper = jsonMapper;
+
+        this.classMap = new HashMap<>();
+        this.loadMap();
+    }
+
+    private void loadMap() throws Exception {
+        var classLoader = CacheFactory.class.getClassLoader();
+        var packageName = CacheFactory.class.getPackageName();
+        var packageResource = packageName.replace(".", "/");
+        var url = classLoader.getResource(packageResource);
+        var root = new File(url.toURI());
+        this.scanMap(root, packageName);
+    }
+
+    private void scanMap(File root, String packageName) throws Exception {
+        var listFiles = root.listFiles();
+        if (listFiles == null || listFiles.length == 0)
+            return;
+        for (File f : listFiles) {
+            var name = f.getName();
+            if (f.isDirectory()) {
+                scanMap(f, packageName + "." + name);
+            } else if (name.endsWith(".class")) {
+                var className = packageName + "." + name.replace(".class", "");
+                var clazz = Class.forName(className);
+                if (IBaseCache.class.isAssignableFrom(clazz) && !Modifier.isAbstract(clazz.getModifiers())) {
+                    var iarr = clazz.getInterfaces();
+                    if (iarr != null && iarr.length > 0 && IBaseCache.class.isAssignableFrom(iarr[0])) {
+                        this.classMap.put(iarr[0], clazz);
+                    }
+                }
+            }
+        }
     }
 
     public RedisConnection getConnection() throws Exception {
@@ -60,13 +96,7 @@ public class CacheFactory implements AutoCloseable {
         var arr = item.split(":");
         if (arr.length > 2)
             throw new Exception("item=" + item + " is error!");
-        Class<?> impClass = clazz;
-        var sname = clazz.getSimpleName();
-        if (sname.startsWith("I")) {
-            var name = clazz.getName();
-            var className = name.substring(0, name.length() - sname.length()) + sname.substring(1);
-            impClass = Class.forName(className);
-        }
+        Class<?> impClass = this.classMap.get(clazz);
         if (impClass == null)
             throw new Exception("clazz(" + clazz.getName() + ") is error!");
         T cache = null;
@@ -98,13 +128,7 @@ public class CacheFactory implements AutoCloseable {
         var arr = item.split(":");
         if (arr.length > 2)
             throw new Exception("item=" + item + " is error!");
-        Class<?> impClass = clazz;
-        var sname = clazz.getSimpleName();
-        if (sname.startsWith("I")) {
-            var name = clazz.getName();
-            var className = name.substring(0, name.length() - sname.length()) + sname.substring(1);
-            impClass = Class.forName(className);
-        }
+        Class<?> impClass = this.classMap.get(clazz);
         if (impClass == null)
             throw new Exception("clazz(" + clazz.getName() + ") is error!");
         T cache = null;
@@ -139,13 +163,7 @@ public class CacheFactory implements AutoCloseable {
         var arr = item.split(":");
         if (arr.length > 2)
             throw new Exception("item=" + item + " is error!");
-        Class<?> impClass = clazz;
-        var sname = clazz.getSimpleName();
-        if (sname.startsWith("I")) {
-            var name = clazz.getName();
-            var className = name.substring(0, name.length() - sname.length()) + sname.substring(1);
-            impClass = Class.forName(className);
-        }
+        Class<?> impClass = this.classMap.get(clazz);
         if (impClass == null)
             throw new Exception("clazz(" + clazz.getName() + ") is error!");
         T cache = null;

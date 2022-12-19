@@ -2,7 +2,9 @@ package cn.myafx.cache.base;
 
 import org.springframework.data.redis.connection.RedisConnection;
 
-import cn.myafx.cache.*;
+import cn.myafx.cache.CacheKeyConfig;
+import cn.myafx.cache.ICacheKey;
+import cn.myafx.cache.IJsonMapper;
 
 /**
  * redis 缓存

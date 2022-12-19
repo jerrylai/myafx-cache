@@ -2,6 +2,7 @@ package cn.myafx.cache;
 
 import java.io.File;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,7 +25,7 @@ public class CacheKey implements ICacheKey {
     public CacheKey() throws Exception {
         String xmlFile = System.getenv("xmlCacheKeyFile");
         if (xmlFile == null || xmlFile.isEmpty()) {
-            xmlFile = "src/main/resources/cache-key.xml";
+            xmlFile = "cache-key.xml";
         }
 
         this.load(xmlFile);
@@ -39,14 +40,20 @@ public class CacheKey implements ICacheKey {
         if (xmlFile == null || xmlFile.isEmpty())
             throw new Exception("cache-key.xml is not found!");
 
-        String path = xmlFile;
-        if (xmlFile.startsWith("classpath:")) {
-            path = "src/main/resources/" + xmlFile.substring("classpath:".length());
-        } else if (xmlFile == "env:xmlCacheKeyFile") {
-            path = System.getenv("xmlCacheKeyFile");
-        }
+        this.load(xmlFile);
+    }
 
-        this.load(path);
+    /**
+     * 
+     * @param url url
+     * @throws Exception Exception
+     */
+    public CacheKey(URL url) throws Exception {
+        if (url == null)
+            throw new Exception("url is null!");
+        try (var stream = url.openStream()) {
+            this.load(stream);
+        }
     }
 
     /**

@@ -1,4 +1,4 @@
-package cn.myafx.cache;
+package cn.myafx.utils;
 
 import java.util.UUID;
 
