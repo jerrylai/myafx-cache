@@ -60,7 +60,8 @@ public class CacheFactory implements AutoCloseable {
             } else if (name.endsWith(".class")) {
                 var className = packageName + "." + name.replace(".class", "");
                 var clazz = Class.forName(className);
-                if (IBaseCache.class.isAssignableFrom(clazz) && !Modifier.isAbstract(clazz.getModifiers())) {
+                if (!clazz.isInterface() && BaseCache.class.isAssignableFrom(clazz)
+                        && !Modifier.isAbstract(clazz.getModifiers())) {
                     var iarr = clazz.getInterfaces();
                     if (iarr != null && iarr.length > 0 && IBaseCache.class.isAssignableFrom(iarr[0])) {
                         this.classMap.put(iarr[0], clazz);
